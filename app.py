@@ -1,8 +1,27 @@
 from flask import Flask, request
 from flasgger import Swagger
+import nltk
+import re
+
+nltk.download('stopwords')
+
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+ps = PorterStemmer()
+
+all_stopwords = stopwords.words('english')
+all_stopwords.remove('not')
 
 app = Flask(__name__)
 swagger = Swagger(app)
+
+def preprocess(input: str) -> str:
+  review = re.sub('[^a-zA-Z]', ' ', input)
+  review = review.lower()
+  review = review.split()
+  review = [ps.stem(word) for word in review if not word in set(all_stopwords)]
+  result = ' '.join(review)
+  return result
 
 @app.route('/', methods=['POST'])
 def predict():
@@ -27,9 +46,10 @@ def predict():
       200:
         description: Some result
     """
-    msg = request.get_json().get('msg')
+    msg: str = request.get_json().get('msg')
+    review = preprocess(msg)
     return {
-        "result": "Message was: " + msg,
+        "result": review,
     }
 
 app.run(host="0.0.0.0", port=8080, debug=True)
