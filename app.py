@@ -1,27 +1,87 @@
 from flask import Flask, request
 from flasgger import Swagger
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+
 import nltk
 import re
+import joblib
 
 nltk.download('stopwords')
 
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-ps = PorterStemmer()
 
+ps = PorterStemmer()
 all_stopwords = stopwords.words('english')
 all_stopwords.remove('not')
 
 app = Flask(__name__)
 swagger = Swagger(app)
 
-def preprocess(input: str) -> str:
+
+def get_model():
+    """
+    Load the model file.
+    """
+    return joblib.load('model/c2_Classifier_Sentiment_Model')
+  
+  
+def get_count_vectorizer():
+    """
+    Load the CountVectorizer file.
+    """
+    return joblib.load('model/c1_BoW_Sentiment_Model.pkl')
+
+def remove_stopwords(input: str) -> str:
+  """
+  Removes stopwords from the input string.
+
+  Args:
+      input (str): The string to remove stopwords from.
+
+  Returns:
+      str: The string without stopwords.
+  """
   review = re.sub('[^a-zA-Z]', ' ', input)
   review = review.lower()
   review = review.split()
   review = [ps.stem(word) for word in review if not word in set(all_stopwords)]
   result = ' '.join(review)
   return result
+
+
+def preprocess_review(review: str) -> np.ndarray:
+    """
+    Preprocesses the input review by removing stopwords and transforming it
+    using the provided CountVectorizer.
+
+    Args:
+        review (str): The review to preprocess.
+
+    Returns:
+        np.ndarray: The preprocessed and transformed review.
+    """
+    review = remove_stopwords(review)
+    cv = get_count_vectorizer()
+    X = cv.transform([review]).toarray()
+    return X
+  
+  
+def classify_review(review: str):
+    """
+    Makes a prediction based on the model and the input review.
+
+    Args:
+        review (str): The review to classify.
+
+    Returns:
+        int: The predicted sentiment label.
+    """
+    model = get_model()
+    result = model.predict(review)
+    return result
+
 
 @app.route('/', methods=['POST'])
 def predict():
@@ -46,10 +106,18 @@ def predict():
       200:
         description: Some result
     """
+    
     msg: str = request.get_json().get('msg')
-    review = preprocess(msg)
+    
+    # Preprocess the review
+    review = preprocess_review(msg)
+    # Make the prediction
+    classification = classify_review(review)
+    
     return {
-        "result": review,
+        "predicted_class": classification[1],
+        "classes": classification[0],
+        "msg": msg
     }
 
 app.run(host="0.0.0.0", port=8080, debug=True)
