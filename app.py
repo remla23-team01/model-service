@@ -115,8 +115,7 @@ def predict():
     classification = classify_review(review)
     
     return {
-        "predicted_class": classification[1],
-        "classes": classification[0],
+        "predicted_class": int(classification[0]),
         "msg": msg
     }
 
