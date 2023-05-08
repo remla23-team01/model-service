@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS
 from flasgger import Swagger
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
@@ -17,6 +18,7 @@ all_stopwords = stopwords.words('english')
 all_stopwords.remove('not')
 
 app = Flask(__name__)
+CORS(app)
 swagger = Swagger(app)
 
 
