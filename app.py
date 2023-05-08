@@ -86,6 +86,7 @@ def classify_review(review: str):
 
 
 @app.route('/', methods=['POST'])
+@cross_origin()
 def predict():
     """
     Make a hardcoded prediction
