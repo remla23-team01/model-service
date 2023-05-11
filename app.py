@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flasgger import Swagger
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
