@@ -2,12 +2,15 @@ from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
 from flasgger import Swagger
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
+from loggger.custom_logger import CustomFormatter
+import logging
 
 import nltk
 import re
 import joblib
 
+
+"""NLTK"""
 nltk.download('stopwords')
 
 from nltk.corpus import stopwords
@@ -17,9 +20,24 @@ ps = PorterStemmer()
 all_stopwords = stopwords.words('english')
 all_stopwords.remove('not')
 
+"""FLASK"""""
 app = Flask(__name__)
+
+"""CORS"""
 CORS(app)
+
+"""SWAGGER"""
 swagger = Swagger(app)
+
+"""LOGGING"""
+# create logger with custom formatter
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
 
 
 """Metrics"""
@@ -51,11 +69,13 @@ def remove_stopwords(input: str) -> str:
   Returns:
       str: The string without stopwords.
   """
+  logger.debug("Removing stopwords...")
   review = re.sub('[^a-zA-Z]', ' ', input)
   review = review.lower()
   review = review.split()
   review = [ps.stem(word) for word in review if not word in set(all_stopwords)]
   result = ' '.join(review)
+  logger.debug("Stopwords removed.")
   return result
 
 
@@ -71,7 +91,9 @@ def preprocess_review(review: str) -> np.ndarray:
         np.ndarray: The preprocessed and transformed review.
     """
     review = remove_stopwords(review)
+    logger.debug("Loading CountVectorizer...")
     cv = get_count_vectorizer()
+    logger.info("CountVectorizer loaded.")
     X = cv.transform([review]).toarray()
     return X
   
@@ -86,7 +108,9 @@ def classify_review(review: str):
     Returns:
         int: The predicted sentiment label.
     """
+    logger.debug("Loading model...")
     model = get_model()
+    logger.info("Model loaded.")
     result = model.predict(review)
     return result
 
@@ -125,9 +149,13 @@ def predict():
     msg: str = request.get_json().get('msg')
     
     # Preprocess the review
+    logger.debug("Preprocessing review...")
     review = preprocess_review(msg)
+    logger.info("Preprocessing done.")
     # Make the prediction
+    logger.debug("Classifying review...")
     classification = classify_review(review)
+    logger.info("Classification done.")
     
     predicted_class = int(classification[0])
     
@@ -151,6 +179,7 @@ def get_metrics():
     Returns:
         Response: The metrics in Prometheus format.
     """
+    logger.info("Getting metrics...")
     global number_of_requests
     global number_of_positive_predictions
     global number_of_negative_predictions
