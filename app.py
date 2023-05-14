@@ -21,6 +21,9 @@ app = Flask(__name__)
 CORS(app)
 swagger = Swagger(app)
 
+countIdx = 0
+countSub = 0
+
 
 def get_model():
     """
@@ -85,6 +88,24 @@ def classify_review(review: str):
     return result
 
 
+@app.route('/metrics', methods=['GET'])
+def metrics():
+    global countIdx, countSub
+
+    m = "# HELP my_random This is just a random 'gauge' for illustration.\n"
+    m+= "# TYPE my_random gauge\n"
+    m+= "my_random " + str(random()) + "\n\n"
+
+    m+= "# HELP num_requests The number of requests that have been served, by page.\n"
+    m+= "# TYPE num_requests counter\n"
+    m+= "num_requests{{page=\"index\"}} {}\n".format(countIdx)
+    m+= "num_requests{{page=\"sub\"}} {}\n".format(countSub)
+
+    return Response(m, mimetype="text/plain")
+
+app.run(host="0.0.0.0", port=8080, debug=True)
+
+
 @app.route('/', methods=['POST'])
 @cross_origin()
 def predict():
@@ -123,3 +144,4 @@ def predict():
     }
 
 app.run(host="0.0.0.0", port=8080, debug=True)
+
