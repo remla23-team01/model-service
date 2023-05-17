@@ -45,6 +45,8 @@ swagger = Swagger(app)
 number_of_requests = 0
 number_of_positive_predictions = 0
 number_of_negative_predictions = 0
+number_of_correct_predictions = 0
+number_of_incorrect_predictions = 0
 
 countIdx = 0
 countSub = 0
@@ -172,6 +174,44 @@ def predict():
     return {
         "predicted_class": predicted_class,
         "msg": msg
+    }
+
+@app.route('/checkPrediction', methods=['POST'])
+@cross_origin()
+def checkPrediction():
+    """
+    Make a hardcoded prediction
+    ---
+    consumes:
+      - application/json
+    parameters:
+        - name: input_data
+          in: body
+          description: message to be classified.
+          required: True
+          schema:
+            type: object
+            required: sms
+            properties:
+                msg:
+                    type: string
+                    example: This is an example msg.
+    responses:
+      200:
+        description: Some result
+    """ 
+    global number_of_correct_predictions
+    global number_of_incorrect_predictions
+    
+    predicted_class: str = request.get_json().get('predicted_class')
+    prediction_correct: str = request.get_json().get('prediction_correct')
+    
+    if (predicted_class is prediction_correct):
+        number_of_correct_predictions += 1
+    else:
+        number_of_incorrect_predictions += 1
+    return {
+        'msg': "Check done"
     }
 
 
