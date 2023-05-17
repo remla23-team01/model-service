@@ -29,6 +29,7 @@ CORS(app)
 """SWAGGER"""
 swagger = Swagger(app)
 
+
 """LOGGING"""
 # create logger with custom formatter
 logger = logging.getLogger()
@@ -44,6 +45,10 @@ logger.addHandler(ch)
 number_of_requests = 0
 number_of_positive_predictions = 0
 number_of_negative_predictions = 0
+
+countIdx = 0
+countSub = 0
+
 
 
 def get_model():
@@ -113,7 +118,6 @@ def classify_review(review: str):
     logger.info("Model loaded.")
     result = model.predict(review)
     return result
-
 
 @app.route('/', methods=['POST'])
 @cross_origin()
@@ -200,3 +204,4 @@ def get_metrics():
     return Response(message, mimetype="text/plain")
 
 app.run(host="0.0.0.0", port=8080, debug=True)
+
