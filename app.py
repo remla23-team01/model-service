@@ -2,7 +2,7 @@ from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
 from flasgger import Swagger
 import numpy as np
-from loggger.custom_logger import CustomFormatter
+from logger.custom_logger import CustomFormatter
 import logging
 
 import nltk
