@@ -45,6 +45,8 @@ swagger = Swagger(app)
 number_of_requests = 0
 number_of_positive_predictions = 0
 number_of_negative_predictions = 0
+number_of_correct_predictions = 0
+number_of_incorrect_predictions = 0
 
 countIdx = 0
 countSub = 0
@@ -174,6 +176,48 @@ def predict():
         "msg": msg
     }
 
+@app.route('/checkPrediction', methods=['POST'])
+@cross_origin()
+def checkPrediction():
+    """
+    Make a hardcoded prediction
+    ---
+    consumes:
+      - application/json
+    parameters:
+        - name: prediction
+          in: body
+          description: The class that was predicted
+          required: True
+          schema:
+            type: object
+            properties:
+                predicted_class:
+                    type: bool
+                    example: true
+                prediction_correct:
+                    type: bool
+                    example: false
+
+    responses:
+      200:
+        description: the number of predictions that were correct and incorrect
+    """ 
+    global number_of_correct_predictions
+    global number_of_incorrect_predictions
+    
+    predicted_class: str = request.get_json().get('predicted_class')
+    prediction_correct: str = request.get_json().get('prediction_correct')
+    
+    if (predicted_class == prediction_correct):
+        number_of_correct_predictions += 1
+    else:
+        number_of_incorrect_predictions += 1
+    return {
+        'number_of_correct_predictions': number_of_correct_predictions,
+        'number_of_incorrect_predictions': number_of_incorrect_predictions,     
+    }
+
 
 @app.route('/metrics', methods=['GET'])
 def get_metrics():
@@ -194,12 +238,20 @@ def get_metrics():
     message += "# HELP number_of_positive_predictions Number of positive predictions\n"
     message += "# TYPE number_of_positive_predictions counter\n"
     
-    message += "# HELP number_of_negative_predictions Number of neagative predictions\n"
+    message += "# HELP number_of_negative_predictions Number of negative predictions\n"
     message += "# TYPE number_of_negative_predictions counter\n"
+
+    message += "# HELP number_of_correct_predictions Number of correct predictions\n"
+    message += "# TYPE number_of_correct_predictions counter\n"
+
+    message += "# HELP number_of_incorrect_predictions Number of incorrect predictions\n"
+    message += "# TYPE number_of_incorrect_predictions counter\n"
 
     message+= "number_of_requests{{page=\"index\"}} {}\n".format(number_of_requests)
     message+= "number_of_positive_predictions{{page=\"sub\"}} {}\n".format(number_of_positive_predictions)
     message+= "number_of_negative_predictions{{page=\"sub\"}} {}\n".format(number_of_negative_predictions)
+    message+= "number_of_correct_predictions{{page=\"sub\"}} {}\n".format(number_of_correct_predictions)
+    message+= "number_of_incorrect_predictions{{page=\"sub\"}} {}\n".format(number_of_incorrect_predictions)
 
     return Response(message, mimetype="text/plain")
 
