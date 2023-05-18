@@ -3,7 +3,7 @@ Small backend to do model predictions with.
 
 To run the model use the command:
 ```
-pip install -r requirements.txt; python ./app
+pip install -r requirements.txt; python ./app.py
 ```
 
 Or to run the service in a Docker container:
