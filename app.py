@@ -9,6 +9,7 @@ import nltk
 import re
 import joblib
 
+import urllib.request
 
 """NLTK"""
 nltk.download('stopwords')
@@ -29,7 +30,6 @@ CORS(app)
 """SWAGGER"""
 swagger = Swagger(app)
 
-
 """LOGGING"""
 # create logger with custom formatter
 # logger = logging.getLogger()
@@ -49,39 +49,49 @@ number_of_negative_predictions = 0
 countIdx = 0
 countSub = 0
 
+ML_MODELS_URL = 'https://github.com/remla23-team01/model-training/tree/main/ml_models'
+cv = None
+model = None
 
 
 def get_model():
     """
     Load the model file.
     """
-    return joblib.load('model/c2_Classifier_Sentiment_Model')
-  
-  
+    global model
+    if not model:
+        model = joblib.load(urllib.request.urlopen(f"{ML_MODELS_URL}/c2_Classifier_Sentiment_Model"))
+    return model
+
+
 def get_count_vectorizer():
     """
     Load the CountVectorizer file.
     """
-    return joblib.load('model/c1_BoW_Sentiment_Model.pkl')
+    global cv
+    if not cv:
+        cv = joblib.load(urllib.request.urlopen(f"{ML_MODELS_URL}/c1_BoW_Sentiment_Model.pkl"))
+    return cv
+
 
 def remove_stopwords(input: str) -> str:
-  """
-  Removes stopwords from the input string.
+    """
+    Removes stopwords from the input string.
 
-  Args:
-      input (str): The string to remove stopwords from.
+    Args:
+        input (str): The string to remove stopwords from.
 
-  Returns:
-      str: The string without stopwords.
-  """
-#   logger.debug("Removing stopwords...")
-  review = re.sub('[^a-zA-Z]', ' ', input)
-  review = review.lower()
-  review = review.split()
-  review = [ps.stem(word) for word in review if not word in set(all_stopwords)]
-  result = ' '.join(review)
-#   logger.debug("Stopwords removed.")
-  return result
+    Returns:
+        str: The string without stopwords.
+    """
+    #   logger.debug("Removing stopwords...")
+    review = re.sub('[^a-zA-Z]', ' ', input)
+    review = review.lower()
+    review = review.split()
+    review = [ps.stem(word) for word in review if not word in set(all_stopwords)]
+    result = ' '.join(review)
+    #   logger.debug("Stopwords removed.")
+    return result
 
 
 def preprocess_review(review: str) -> np.ndarray:
@@ -101,8 +111,8 @@ def preprocess_review(review: str) -> np.ndarray:
     # logger.info("CountVectorizer loaded.")
     X = cv.transform([review]).toarray()
     return X
-  
-  
+
+
 def classify_review(review: str):
     """
     Makes a prediction based on the model and the input review.
@@ -118,6 +128,7 @@ def classify_review(review: str):
     # logger.info("Model loaded.")
     result = model.predict(review)
     return result
+
 
 @app.route('/', methods=['POST'])
 @cross_origin()
@@ -143,15 +154,15 @@ def predict():
       200:
         description: Some result
     """
-    global number_of_requests 
+    global number_of_requests
     global number_of_positive_predictions
     global number_of_negative_predictions
-    
+
     # Increment the number of requests
     number_of_requests += 1
-    
+
     msg: str = request.get_json().get('msg')
-    
+
     # Preprocess the review
     # logger.debug("Preprocessing review...")
     review = preprocess_review(msg)
@@ -160,15 +171,15 @@ def predict():
     # logger.debug("Classifying review...")
     classification = classify_review(review)
     # logger.info("Classification done.")
-    
+
     predicted_class = int(classification[0])
-    
+
     # Increment the number of positive or negative predictions
     if predicted_class == 1:
         number_of_positive_predictions += 1
     else:
         number_of_negative_predictions += 1
-    
+
     return {
         "predicted_class": predicted_class,
         "msg": msg
@@ -187,21 +198,21 @@ def get_metrics():
     global number_of_requests
     global number_of_positive_predictions
     global number_of_negative_predictions
-    
+
     message = "# HELP number_of_requests Number of requests\n"
     message += "# TYPE number_of_requests counter\n"
-    
+
     message += "# HELP number_of_positive_predictions Number of positive predictions\n"
     message += "# TYPE number_of_positive_predictions counter\n"
-    
+
     message += "# HELP number_of_negative_predictions Number of neagative predictions\n"
     message += "# TYPE number_of_negative_predictions counter\n"
 
-    message+= "number_of_requests{{page=\"index\"}} {}\n".format(number_of_requests)
-    message+= "number_of_positive_predictions{{page=\"sub\"}} {}\n".format(number_of_positive_predictions)
-    message+= "number_of_negative_predictions{{page=\"sub\"}} {}\n".format(number_of_negative_predictions)
+    message += "number_of_requests{{page=\"index\"}} {}\n".format(number_of_requests)
+    message += "number_of_positive_predictions{{page=\"sub\"}} {}\n".format(number_of_positive_predictions)
+    message += "number_of_negative_predictions{{page=\"sub\"}} {}\n".format(number_of_negative_predictions)
 
     return Response(message, mimetype="text/plain")
 
-app.run(host="0.0.0.0", port=8080, debug=True)
 
+app.run(host="0.0.0.0", port=8080, debug=True)
