@@ -241,6 +241,8 @@ def get_metrics():
     global number_of_requests
     global number_of_positive_predictions
     global number_of_negative_predictions
+    global number_of_correct_predictions
+    global number_of_incorrect_predictions
 
     message = "# HELP number_of_requests Number of requests\n"
     message += "# TYPE number_of_requests counter\n"
@@ -257,11 +259,11 @@ def get_metrics():
     message += "# HELP number_of_incorrect_predictions Number of incorrect predictions\n"
     message += "# TYPE number_of_incorrect_predictions counter\n"
 
-    message += "number_of_requests{{page=\"index\"}} {}\n".format(number_of_requests)
-    message += "number_of_positive_predictions{{page=\"sub\"}} {}\n".format(number_of_positive_predictions)
-    message += "number_of_negative_predictions{{page=\"sub\"}} {}\n".format(number_of_negative_predictions)
-    message += "number_of_correct_predictions{{page=\"sub\"}} {}\n".format(number_of_correct_predictions)
-    message += "number_of_incorrect_predictions{{page=\"sub\"}} {}\n".format(number_of_incorrect_predictions)
+    message += "number_of_requests {}\n".format(number_of_requests)
+    message += "number_of_positive_predictions {}\n".format(number_of_positive_predictions)
+    message += "number_of_negative_predictions {}\n".format(number_of_negative_predictions)
+    message += "number_of_correct_predictions {}\n".format(number_of_correct_predictions)
+    message += "number_of_incorrect_predictions {}\n".format(number_of_incorrect_predictions)
 
     return Response(message, mimetype="text/plain")
 
