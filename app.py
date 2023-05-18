@@ -61,7 +61,7 @@ def get_count_vectorizer():
     """
     Load the CountVectorizer file.
     """
-         return joblib.load('ml_models/c1_BoW_Sentiment_Model.pkl')
+    return joblib.load('ml_models/c1_BoW_Sentiment_Model.pkl')
 
 
 def remove_stopwords(input: str) -> str:
