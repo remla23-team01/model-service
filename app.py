@@ -119,8 +119,7 @@ def classify_review(review: str):
     result = model.predict(review)
     return result
 
-@app.route('/', methods=['POST'])
-@cross_origin()
+@app.route('/predict', methods=['POST'])
 def predict():
     """
     Make a hardcoded prediction
