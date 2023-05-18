@@ -22,4 +22,3 @@ tqdm==4.65.0
 Werkzeug==2.2.3
 zipp==3.15.0
 flask-cors==3.0.10
-urllib3==1.22
