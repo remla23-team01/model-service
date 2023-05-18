@@ -122,7 +122,7 @@ def classify_review(review: str):
 @app.route('/predict', methods=['POST'])
 def predict():
     """
-    Make a hardcoded prediction
+    Makes a sentiment prediction of the input message
     ---
     consumes:
       - application/json
@@ -178,7 +178,7 @@ def predict():
 @cross_origin()
 def checkPrediction():
     """
-    Make a hardcoded prediction
+    Checks if the prediction is correct
     ---
     consumes:
       - application/json
@@ -207,7 +207,7 @@ def checkPrediction():
     predicted_class: str = request.get_json().get('predicted_class')
     prediction_correct: str = request.get_json().get('prediction_correct')
 
-    if (predicted_class == prediction_correct):
+    if (prediction_correct):
         number_of_correct_predictions += 1
     else:
         number_of_incorrect_predictions += 1
