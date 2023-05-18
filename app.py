@@ -9,6 +9,8 @@ import nltk
 import re
 import joblib
 
+import urllib.request
+
 """NLTK"""
 nltk.download('stopwords')
 
@@ -49,19 +51,29 @@ number_of_incorrect_predictions = 0
 countIdx = 0
 countSub = 0
 
+ML_MODELS_URL = 'https://github.com/remla23-team01/model-training/tree/main/ml_models'
+cv = None
+model = None
+
 
 def get_model():
     """
     Load the model file.
     """
-    return joblib.load('model/c2_Classifier_Sentiment_Model')
+    global model
+    if not model:
+        model = joblib.load(urllib.request.urlopen(f"{ML_MODELS_URL}/c2_Classifier_Sentiment_Model"))
+    return model
 
 
 def get_count_vectorizer():
     """
     Load the CountVectorizer file.
     """
-    return joblib.load('model/c1_BoW_Sentiment_Model.pkl')
+    global cv
+    if not cv:
+        cv = joblib.load(urllib.request.urlopen(f"{ML_MODELS_URL}/c1_BoW_Sentiment_Model.pkl"))
+    return cv
 
 
 def remove_stopwords(input: str) -> str:
