@@ -46,9 +46,26 @@ number_of_negative_predictions = 0
 number_of_correct_predictions = 0
 number_of_incorrect_predictions = 0
 
-countIdx = 0
-countSub = 0
+""""Reviews"""
+reviews = []
 
+class Review:
+    id: int
+    review:str
+    predicted: int
+    actual: int
+
+    def __init__(self, id: int, review:str, predicted: int, actual: int = -1):
+        self.id = id
+        self.review = review
+        self.predicted = predicted
+        self.actual = actual
+
+def get_review_by_id(reviewId: int):
+    filtered = list(filter(lambda x: x.id == reviewId, reviews))
+    if len(filtered) == 0:
+        return None
+    return filtered[0]
 
 def get_model():
     """
@@ -135,12 +152,12 @@ def predict():
             type: object
             required: sms
             properties:
-                msg:
+                review:
                     type: string
-                    example: This is an example msg.
+                    example: This is an example review.
     responses:
       200:
-        description: Some result
+        description: The predicted class of the review
     """
     global number_of_requests
     global number_of_positive_predictions
@@ -148,16 +165,16 @@ def predict():
 
     # Increment the number of requests
     number_of_requests += 1
-
-    msg: str = request.get_json().get('msg')
-
+    
+    input: str = request.get_json().get('review')
+    
     # Preprocess the review
     # logger.debug("Preprocessing review...")
-    review = preprocess_review(msg)
+    processed_review = preprocess_review(input)
     # logger.info("Preprocessing done.")
     # Make the prediction
     # logger.debug("Classifying review...")
-    classification = classify_review(review)
+    classification = classify_review(processed_review)
     # logger.info("Classification done.")
 
     predicted_class = int(classification[0])
@@ -167,10 +184,14 @@ def predict():
         number_of_positive_predictions += 1
     else:
         number_of_negative_predictions += 1
+    
+    nextId = len(reviews)
 
+    review = Review(nextId, input, predicted_class)
+    reviews.append(review)
     return {
         "predicted_class": predicted_class,
-        "msg": msg
+        "review": review.__dict__
     }
 
 
@@ -190,9 +211,9 @@ def checkPrediction():
           schema:
             type: object
             properties:
-                predicted_class:
-                    type: bool
-                    example: true
+                reviewId:
+                    type: int
+                    example: 1
                 prediction_correct:
                     type: bool
                     example: false
@@ -200,22 +221,97 @@ def checkPrediction():
     responses:
       200:
         description: the number of predictions that were correct and incorrect
+      404:
+        description: When the review with the given id does not exist
     """
     global number_of_correct_predictions
     global number_of_incorrect_predictions
 
-    predicted_class: str = request.get_json().get('predicted_class')
+    reviewId: int = request.get_json().get('reviewId')
+    review: Review = get_review_by_id(reviewId)
+
+    if (review == None):
+        return "Review not found", 404
+
     prediction_correct: str = request.get_json().get('prediction_correct')
 
     if (prediction_correct):
         number_of_correct_predictions += 1
     else:
         number_of_incorrect_predictions += 1
+    
+    review.actual = int(review.predicted) if prediction_correct else int(not review.predicted)
     return {
         'number_of_correct_predictions': number_of_correct_predictions,
         'number_of_incorrect_predictions': number_of_incorrect_predictions,
     }
 
+@app.route('/getReviews', methods=['GET'])
+@cross_origin()
+def getReviews():
+    """
+    Get a list with all reviews
+    ---
+    responses:
+      200:
+        description: A list with all predictions made
+    """ 
+    return {
+        'reviews': [review.review for review in reviews ],
+    }
+
+
+@app.route('/getPredictions', methods=['GET'])
+@cross_origin()
+def getPredictions():
+    """
+    Get a list with all predictions
+    ---
+    responses:
+      200:
+        description: A list with all predictions made
+    """ 
+    return {
+        'reviews': [review.__dict__ for review in reviews ],
+    }
+
+@app.route('/changeActual', methods=['POST'])
+@cross_origin()
+def changeActual():
+    """
+    Change the actual sentiment of a review
+    ---
+    consumes:
+      - application/json
+    parameters:
+        - name: prediction
+          in: body
+          description: The class that was predicted
+          required: True
+          schema:
+            type: object
+            properties:
+                reviewId:
+                    type: int
+                    example: 1
+                actual:
+                    type: int
+                    example: 0
+
+    responses:
+      200:
+        description: The updated review
+      404:
+        description: When the review with the given id does not exist
+    """
+    reviewId: int = request.get_json().get('reviewId')
+    actual: int = request.get_json().get('actual')
+    review: Review = get_review_by_id(reviewId)
+
+    if (review == None):
+        return "Review not found", 404
+    review.actual = actual
+    return {'review': review.__dict__}, 200
 
 @app.route('/metrics', methods=['GET'])
 def get_metrics():
