@@ -1,34 +1,41 @@
+"""
+Module that contains the Flask application and the endpoints to serve the
+model.
+"""
+
+import re
+
+import joblib
+import nltk
+import numpy as np
+from flasgger import Swagger
 from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
-from flasgger import Swagger
-import numpy as np
-# from logger.custom_logger import CustomFormatter
-# import logging
-
-import nltk
-import re
-import joblib
-
-"""NLTK"""
-nltk.download('stopwords')
-
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 
-ps = PorterStemmer()
-all_stopwords = stopwords.words('english')
-all_stopwords.remove('not')
+# from logger.custom_logger import CustomFormatter
+# import logging
 
-"""FLASK"""""
+
+# NLTK
+nltk.download("stopwords")
+
+
+ps = PorterStemmer()
+all_stopwords = stopwords.words("english")
+all_stopwords.remove("not")
+
+# FLASK
 app = Flask(__name__)
 
-"""CORS"""
+# CORS
 CORS(app)
 
-"""SWAGGER"""
+# SWAGGER
 swagger = Swagger(app)
 
-"""LOGGING"""
+# LOGGING
 # create logger with custom formatter
 # logger = logging.getLogger()
 # logger.setLevel(logging.DEBUG)
@@ -39,46 +46,53 @@ swagger = Swagger(app)
 # logger.addHandler(ch)
 
 
-"""Metrics"""
-number_of_requests = 0
-number_of_positive_predictions = 0
-number_of_negative_predictions = 0
-number_of_correct_predictions = 0
-number_of_incorrect_predictions = 0
+# Metrics
+NUMBER_OF_REQUESTS = 0
+NUMBER_OF_POSTIVE_PREDICTIONS = 0
+NUMBER_OF_NEGATIVE_PREDICTIONS = 0
+NUMBER_OF_CORRECT_PREDICTIONS = 0
+NUMBER_OF_INCORRECT_PREDICTIONS = 0
 
-""""Reviews"""
+# Reviews
 reviews = []
 
+
 class Review:
+    """
+    Class that represents a review.
+    """
+
     id: int
-    review:str
+    review: str
     predicted: int
     actual: int
 
-    def __init__(self, id: int, review:str, predicted: int, actual: int = -1):
+    def __init__(self, id: int, review: str, predicted: int, actual: int = -1):
         self.id = id
         self.review = review
         self.predicted = predicted
         self.actual = actual
 
-def get_review_by_id(reviewId: int):
-    filtered = list(filter(lambda x: x.id == reviewId, reviews))
+
+def get_review_by_id(review_id: int):
+    filtered = list(filter(lambda x: x.id == review_id, reviews))
     if len(filtered) == 0:
         return None
     return filtered[0]
+
 
 def get_model():
     """
     Load the model file.
     """
-    return joblib.load('ml_models/c2_Classifier_Sentiment_Model')
+    return joblib.load("ml_models/c2_Classifier_Sentiment_Model")
 
 
 def get_count_vectorizer():
     """
     Load the CountVectorizer file.
     """
-    return joblib.load('ml_models/c1_BoW_Sentiment_Model.pkl')
+    return joblib.load("ml_models/c1_BoW_Sentiment_Model.pkl")
 
 
 def remove_stopwords(input: str) -> str:
@@ -92,11 +106,13 @@ def remove_stopwords(input: str) -> str:
         str: The string without stopwords.
     """
     #   logger.debug("Removing stopwords...")
-    review = re.sub('[^a-zA-Z]', ' ', input)
+    review = re.sub("[^a-zA-Z]", " ", input)
     review = review.lower()
     review = review.split()
-    review = [ps.stem(word) for word in review if not word in set(all_stopwords)]
-    result = ' '.join(review)
+    review = [
+        ps.stem(word) for word in review if not word in set(all_stopwords)
+    ]
+    result = " ".join(review)
     #   logger.debug("Stopwords removed.")
     return result
 
@@ -136,7 +152,8 @@ def classify_review(review: str):
     result = model.predict(review)
     return result
 
-@app.route('/predict', methods=['POST'])
+
+@app.route("/predict", methods=["POST"])
 def predict():
     """
     Makes a sentiment prediction of the input message
@@ -159,15 +176,15 @@ def predict():
       200:
         description: The predicted class of the review
     """
-    global number_of_requests
-    global number_of_positive_predictions
-    global number_of_negative_predictions
+    global NUMBER_OF_REQUESTS
+    global NUMBER_OF_POSTIVE_PREDICTIONS
+    global NUMBER_OF_NEGATIVE_PREDICTIONS
 
     # Increment the number of requests
-    number_of_requests += 1
-    
-    input: str = request.get_json().get('review')
-    
+    NUMBER_OF_REQUESTS += 1
+
+    input: str = request.get_json().get("review")
+
     # Preprocess the review
     # logger.debug("Preprocessing review...")
     processed_review = preprocess_review(input)
@@ -181,23 +198,20 @@ def predict():
 
     # Increment the number of positive or negative predictions
     if predicted_class == 1:
-        number_of_positive_predictions += 1
+        NUMBER_OF_POSTIVE_PREDICTIONS += 1
     else:
-        number_of_negative_predictions += 1
-    
+        NUMBER_OF_NEGATIVE_PREDICTIONS += 1
+
     nextId = len(reviews)
 
     review = Review(nextId, input, predicted_class)
     reviews.append(review)
-    return {
-        "predicted_class": predicted_class,
-        "review": review.__dict__
-    }
+    return {"predicted_class": predicted_class, "review": review.__dict__}
 
 
-@app.route('/checkPrediction', methods=['POST'])
+@app.route("/checkPrediction", methods=["POST"])
 @cross_origin()
-def checkPrediction():
+def check_prediction():
     """
     Checks if the prediction is correct
     ---
@@ -224,60 +238,66 @@ def checkPrediction():
       404:
         description: When the review with the given id does not exist
     """
-    global number_of_correct_predictions
-    global number_of_incorrect_predictions
+    global NUMBER_OF_CORRECT_PREDICTIONS
+    global NUMBER_OF_INCORRECT_PREDICTIONS
 
-    reviewId: int = request.get_json().get('reviewId')
+    reviewId: int = request.get_json().get("reviewId")
     review: Review = get_review_by_id(reviewId)
 
-    if (review == None):
+    if review is None:
         return "Review not found", 404
 
-    prediction_correct: str = request.get_json().get('prediction_correct')
+    prediction_correct: str = request.get_json().get("prediction_correct")
 
-    if (prediction_correct):
-        number_of_correct_predictions += 1
+    if prediction_correct:
+        NUMBER_OF_CORRECT_PREDICTIONS += 1
     else:
-        number_of_incorrect_predictions += 1
-    
-    review.actual = int(review.predicted) if prediction_correct else int(not review.predicted)
+        NUMBER_OF_INCORRECT_PREDICTIONS += 1
+
+    review.actual = (
+        int(review.predicted)
+        if prediction_correct
+        else int(not review.predicted)
+    )
     return {
-        'number_of_correct_predictions': number_of_correct_predictions,
-        'number_of_incorrect_predictions': number_of_incorrect_predictions,
+        "number_of_correct_predictions": NUMBER_OF_CORRECT_PREDICTIONS,
+        "number_of_incorrect_predictions": NUMBER_OF_INCORRECT_PREDICTIONS,
     }
 
-@app.route('/getReviews', methods=['GET'])
+
+@app.route("/getReviews", methods=["GET"])
 @cross_origin()
-def getReviews():
+def get_reviews():
     """
     Get a list with all reviews
     ---
     responses:
       200:
         description: A list with all predictions made
-    """ 
+    """
     return {
-        'reviews': [review.review for review in reviews ],
+        "reviews": [review.review for review in reviews],
     }
 
 
-@app.route('/getPredictions', methods=['GET'])
+@app.route("/getPredictions", methods=["GET"])
 @cross_origin()
-def getPredictions():
+def get_predictions():
     """
     Get a list with all predictions
     ---
     responses:
       200:
         description: A list with all predictions made
-    """ 
+    """
     return {
-        'reviews': [review.__dict__ for review in reviews ],
+        "reviews": [review.__dict__ for review in reviews],
     }
 
-@app.route('/changeActual', methods=['POST'])
+
+@app.route("/changeActual", methods=["POST"])
 @cross_origin()
-def changeActual():
+def change_actual():
     """
     Change the actual sentiment of a review
     ---
@@ -304,16 +324,17 @@ def changeActual():
       404:
         description: When the review with the given id does not exist
     """
-    reviewId: int = request.get_json().get('reviewId')
-    actual: int = request.get_json().get('actual')
-    review: Review = get_review_by_id(reviewId)
+    review_id: int = request.get_json().get("reviewId")
+    actual: int = request.get_json().get("actual")
+    review: Review = get_review_by_id(review_id)
 
-    if (review == None):
+    if review is None:
         return "Review not found", 404
     review.actual = actual
-    return {'review': review.__dict__}, 200
+    return {"review": review.__dict__}, 200
 
-@app.route('/metrics', methods=['GET'])
+
+@app.route("/metrics", methods=["GET"])
 def get_metrics():
     """
     Get the metrics for the model.
@@ -322,11 +343,11 @@ def get_metrics():
         Response: The metrics in Prometheus format.
     """
     # logger.info("Getting metrics...")
-    global number_of_requests
-    global number_of_positive_predictions
-    global number_of_negative_predictions
-    global number_of_correct_predictions
-    global number_of_incorrect_predictions
+    global NUMBER_OF_REQUESTS
+    global NUMBER_OF_POSTIVE_PREDICTIONS
+    global NUMBER_OF_NEGATIVE_PREDICTIONS
+    global NUMBER_OF_CORRECT_PREDICTIONS
+    global NUMBER_OF_INCORRECT_PREDICTIONS
 
     message = "# HELP number_of_requests Number of requests\n"
     message += "# TYPE number_of_requests counter\n"
@@ -337,17 +358,27 @@ def get_metrics():
     message += "# HELP number_of_negative_predictions Number of negative predictions\n"
     message += "# TYPE number_of_negative_predictions counter\n"
 
-    message += "# HELP number_of_correct_predictions Number of correct predictions\n"
+    message += (
+        "# HELP number_of_correct_predictions Number of correct predictions\n"
+    )
     message += "# TYPE number_of_correct_predictions counter\n"
 
     message += "# HELP number_of_incorrect_predictions Number of incorrect predictions\n"
     message += "# TYPE number_of_incorrect_predictions counter\n"
 
-    message += "number_of_requests {}\n".format(number_of_requests)
-    message += "number_of_positive_predictions {}\n".format(number_of_positive_predictions)
-    message += "number_of_negative_predictions {}\n".format(number_of_negative_predictions)
-    message += "number_of_correct_predictions {}\n".format(number_of_correct_predictions)
-    message += "number_of_incorrect_predictions {}\n".format(number_of_incorrect_predictions)
+    message += f"number_of_requests {NUMBER_OF_REQUESTS}\n"
+    message += (
+        f"number_of_positive_predictions {NUMBER_OF_POSTIVE_PREDICTIONS}\n"
+    )
+    message += (
+        f"number_of_negative_predictions {NUMBER_OF_NEGATIVE_PREDICTIONS}\n"
+    )
+    message += (
+        f"number_of_correct_predictions {NUMBER_OF_CORRECT_PREDICTIONS}\n"
+    )
+    message += (
+        "number_of_incorrect_predictions {NUMBER_OF_INCORRECT_PREDICTIONS}\n"
+    )
 
     return Response(message, mimetype="text/plain")
 
