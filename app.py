@@ -73,8 +73,33 @@ class Review:
         self.predicted = predicted
         self.actual = actual
 
+    def get_id(self):
+        """Get review id."""
+        return self.id
+
+    def get_review(self):
+        """Get review."""
+        return self.review
+
+    def get_predicted(self):
+        """Get review predicted value."""
+        return self.predicted
+
+    def get_actual(self):
+        """Get review actual value."""
+        return self.actual
+
 
 def get_review_by_id(review_id: int):
+    """
+    Get a review by its ID.
+
+    Args:
+        review_id (int): The ID of the review.
+
+    Returns:
+        Review: The review with the given ID.
+    """
     filtered = list(filter(lambda x: x.id == review_id, reviews))
     if len(filtered) == 0:
         return None
@@ -95,18 +120,18 @@ def get_count_vectorizer():
     return joblib.load("ml_models/c1_BoW_Sentiment_Model.pkl")
 
 
-def remove_stopwords(input: str) -> str:
+def remove_stopwords(input_str: str) -> str:
     """
     Removes stopwords from the input string.
 
     Args:
-        input (str): The string to remove stopwords from.
+        input_str (str): The string to remove stopwords from.
 
     Returns:
         str: The string without stopwords.
     """
     #   logger.debug("Removing stopwords...")
-    review = re.sub("[^a-zA-Z]", " ", input)
+    review = re.sub("[^a-zA-Z]", " ", input_str)
     review = review.lower()
     review = review.split()
     review = [
@@ -130,10 +155,10 @@ def preprocess_review(review: str) -> np.ndarray:
     """
     review = remove_stopwords(review)
     # logger.debug("Loading CountVectorizer...")
-    cv = get_count_vectorizer()
+    count_vec = get_count_vectorizer()
     # logger.info("CountVectorizer loaded.")
-    X = cv.transform([review]).toarray()
-    return X
+    transformed_view = count_vec.transform([review]).toarray()
+    return transformed_view
 
 
 def classify_review(review: str):
@@ -202,9 +227,9 @@ def predict():
     else:
         NUMBER_OF_NEGATIVE_PREDICTIONS += 1
 
-    nextId = len(reviews)
+    next_id = len(reviews)
 
-    review = Review(nextId, input, predicted_class)
+    review = Review(next_id, input, predicted_class)
     reviews.append(review)
     return {"predicted_class": predicted_class, "review": review.__dict__}
 
@@ -241,8 +266,8 @@ def check_prediction():
     global NUMBER_OF_CORRECT_PREDICTIONS
     global NUMBER_OF_INCORRECT_PREDICTIONS
 
-    reviewId: int = request.get_json().get("reviewId")
-    review: Review = get_review_by_id(reviewId)
+    review_id: int = request.get_json().get("reviewId")
+    review: Review = get_review_by_id(review_id)
 
     if review is None:
         return "Review not found", 404
