@@ -402,7 +402,7 @@ def get_metrics():
         f"number_of_correct_predictions {NUMBER_OF_CORRECT_PREDICTIONS}\n"
     )
     message += (
-        "number_of_incorrect_predictions {NUMBER_OF_INCORRECT_PREDICTIONS}\n"
+        f"number_of_incorrect_predictions {NUMBER_OF_INCORRECT_PREDICTIONS}\n"
     )
 
     return Response(message, mimetype="text/plain")
