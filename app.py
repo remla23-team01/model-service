@@ -117,7 +117,9 @@ def get_count_vectorizer():
 
 
 def preprocess_review(review: str) -> np.ndarray:
-    return mlSteps.preprocess_review(review)
+    review = mlSteps.remove_stopwords(review)
+    cv = get_count_vectorizer()
+    return cv.transform([review]).toarray()
 
 
 def classify_review(review: str):
@@ -130,7 +132,9 @@ def classify_review(review: str):
     Returns:
         int: The predicted sentiment label.
     """
-    return mlSteps.classify_review(review)
+    model = get_model()
+    result = model.predict(review)
+    return result
 
 def get_version_metrics(version: str) -> VersionMetrics:
 
