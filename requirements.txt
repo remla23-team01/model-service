@@ -24,4 +24,4 @@ tqdm==4.65.0
 Werkzeug==2.2.3
 zipp==3.15.0
 flask-cors==3.0.10
-remla01_lib@git+https://github.com/remla23-team01/lib@lib2.0
+remla01_lib@git+https://github.com/remla23-team01/lib@v1.0.0
