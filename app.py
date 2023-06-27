@@ -343,9 +343,10 @@ def get_metrics():
 
     totalMetrics = VersionMetrics()
 
-    for version in versionMetrics:
-        metrics: VersionMetrics = versionMetrics[version]
+    for version_string in versionMetrics:
+        metrics: VersionMetrics = versionMetrics[version_string]
 
+        version = version_string.replace(".", "_")
         message += f"# HELP number_of_requests_{version} Number of requests of version {version}\n"
         message += f"# TYPE number_of_requests_{version} counter\n"
         message += f"number_of_requests_{version} {metrics.number_of_requests}\n\n"
