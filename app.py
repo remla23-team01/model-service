@@ -4,7 +4,6 @@ model.
 """
 import joblib
 import numpy as np
-from VersionMetrics import VersionMetrics
 from flasgger import Swagger
 from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
@@ -40,6 +39,19 @@ versionMetrics: dict = {}
 # Reviews
 reviews = []
 
+class VersionMetrics:
+    number_of_requests: int
+    number_of_positive_predictions: int
+    number_of_negative_predictions: int
+    number_of_correct_predictions: int
+    number_of_incorrect_predictions: int
+
+    def __init__(self):
+        self.number_of_requests = 0
+        self.number_of_positive_predictions = 0
+        self.number_of_negative_predictions = 0
+        self.number_of_correct_predictions = 0
+        self.number_of_incorrect_predictions = 0
 
 class Review:
     """
