@@ -1,3 +1,4 @@
+[![Release](https://github.com/remla23-team01/model-service/actions/workflows/release.yml/badge.svg)](https://github.com/remla23-team01/model-service/actions/workflows/release.yml)
 # model-service
 Small backend to do model predictions with.
 

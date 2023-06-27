@@ -8,22 +8,13 @@ from VersionMetrics import VersionMetrics
 from flasgger import Swagger
 from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
-
+from flasgger import Swagger
+from remla01_lib import mlSteps
+import numpy as np
 # from logger.custom_logger import CustomFormatter
 # import logging
 
-
-# NLTK
-nltk.download("stopwords")
-
-
-ps = PorterStemmer()
-all_stopwords = stopwords.words("english")
-all_stopwords.remove("not")
-
-# FLASK
+"""FLASK"""""
 app = Flask(__name__)
 
 # CORS
@@ -113,45 +104,8 @@ def get_count_vectorizer():
     return joblib.load("ml_models/c1_BoW_Sentiment_Model.pkl")
 
 
-def remove_stopwords(input_str: str) -> str:
-    """
-    Removes stopwords from the input string.
-
-    Args:
-        input_str (str): The string to remove stopwords from.
-
-    Returns:
-        str: The string without stopwords.
-    """
-    #   logger.debug("Removing stopwords...")
-    review = re.sub("[^a-zA-Z]", " ", input_str)
-    review = review.lower()
-    review = review.split()
-    review = [
-        ps.stem(word) for word in review if not word in set(all_stopwords)
-    ]
-    result = " ".join(review)
-    #   logger.debug("Stopwords removed.")
-    return result
-
-
 def preprocess_review(review: str) -> np.ndarray:
-    """
-    Preprocesses the input review by removing stopwords and transforming it
-    using the provided CountVectorizer.
-
-    Args:
-        review (str): The review to preprocess.
-
-    Returns:
-        np.ndarray: The preprocessed and transformed review.
-    """
-    review = remove_stopwords(review)
-    # logger.debug("Loading CountVectorizer...")
-    count_vec = get_count_vectorizer()
-    # logger.info("CountVectorizer loaded.")
-    transformed_view = count_vec.transform([review]).toarray()
-    return transformed_view
+    return mlSteps.preprocess_review(review)
 
 
 def classify_review(review: str):
@@ -164,11 +118,7 @@ def classify_review(review: str):
     Returns:
         int: The predicted sentiment label.
     """
-    # logger.debug("Loading model...")
-    model = get_model()
-    # logger.info("Model loaded.")
-    result = model.predict(review)
-    return result
+    return mlSteps.classify_review(review)
 
 def get_version_metrics(version: str) -> VersionMetrics:
 
