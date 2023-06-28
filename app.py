@@ -357,7 +357,7 @@ def get_metrics():
     # logger.info("Getting metrics...")
     message = ""
 
-    totalMetrics = VersionMetrics()
+    total_metrics = VersionMetrics()
 
     for version_string in versionMetrics:
         metrics: VersionMetrics = versionMetrics[version_string]
@@ -367,47 +367,47 @@ def get_metrics():
         message += f"# HELP number_of_requests_{version} Number of predictions of version {version_string}\n"
         message += f"# TYPE number_of_requests_{version} counter\n"
         message += f"number_of_requests_{version} {metrics.number_of_requests}\n\n"
-        totalMetrics.number_of_requests += metrics.number_of_requests
+        total_metrics.number_of_requests += metrics.number_of_requests
 
         message += f"# HELP number_of_positive_predictions_{version} Number of positive predictions of version {version_string}\n"
         message += f"# TYPE number_of_positive_predictions_{version} counter\n"
         message += f"number_of_positive_predictions_{version} {metrics.number_of_positive_predictions}\n\n"
-        totalMetrics.number_of_positive_predictions += metrics.number_of_positive_predictions
+        total_metrics.number_of_positive_predictions += metrics.number_of_positive_predictions
 
         message += f"# HELP number_of_negative_predictions_{version} Number of negative predictions of version {version_string}\n"
         message += f"# TYPE number_of_negative_predictions_{version} counter\n"
         message += f"number_of_negative_predictions_{version} {metrics.number_of_negative_predictions}\n\n"
-        totalMetrics.number_of_negative_predictions += metrics.number_of_negative_predictions
+        total_metrics.number_of_negative_predictions += metrics.number_of_negative_predictions
 
         message += f"# HELP number_of_correct_predictions Number of correct predictions of version {version_string}\n"
         message += f"# TYPE number_of_correct_predictions_{version} counter\n"
         message += f"number_of_correct_predictions_{version} {metrics.number_of_correct_predictions}\n\n"
-        totalMetrics.number_of_correct_predictions += metrics.number_of_correct_predictions
+        total_metrics.number_of_correct_predictions += metrics.number_of_correct_predictions
 
         message += f"# HELP number_of_incorrect_predictions_{version} Number of incorrect predictions of version {version_string}\n"
         message += f"# TYPE number_of_incorrect_predictions_{version} counter\n"
         message += f"number_of_incorrect_predictions_{version} {metrics.number_of_incorrect_predictions}\n\n"
-        totalMetrics.number_of_incorrect_predictions += metrics.number_of_incorrect_predictions
+        total_metrics.number_of_incorrect_predictions += metrics.number_of_incorrect_predictions
 
     message += "# HELP number_of_requests Number of predictions\n"
     message += "# TYPE number_of_requests counter\n"
-    message += f"number_of_requests {totalMetrics.number_of_requests}\n\n"
+    message += f"number_of_requests {total_metrics.number_of_requests}\n\n"
 
     message += "# HELP number_of_positive_predictions Number of positive predictions\n"
     message += "# TYPE number_of_positive_predictions counter\n"
-    message += f"number_of_positive_predictions {totalMetrics.number_of_positive_predictions}\n\n"
+    message += f"number_of_positive_predictions {total_metrics.number_of_positive_predictions}\n\n"
 
     message += "# HELP number_of_negative_predictions Number of negative predictions\n"
     message += "# TYPE number_of_negative_predictions counter\n"
-    message += f"number_of_negative_predictions {totalMetrics.number_of_negative_predictions}\n\n"
+    message += f"number_of_negative_predictions {total_metrics.number_of_negative_predictions}\n\n"
 
     message += "# HELP number_of_correct_predictions Number of correct predictions\n"
     message += "# TYPE number_of_correct_predictions counter\n"
-    message += f"number_of_correct_predictions {totalMetrics.number_of_correct_predictions}\n\n"
+    message += f"number_of_correct_predictions {total_metrics.number_of_correct_predictions}\n\n"
 
     message += "# HELP number_of_incorrect_predictions Number of incorrect predictions\n"
     message += "# TYPE number_of_incorrect_predictions counter\n"
-    message += f"number_of_incorrect_predictions {totalMetrics.number_of_incorrect_predictions}\n\n"
+    message += f"number_of_incorrect_predictions {total_metrics.number_of_incorrect_predictions}\n\n"
 
 
     return Response(message, mimetype="text/plain")
