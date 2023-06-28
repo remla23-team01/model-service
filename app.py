@@ -7,13 +7,10 @@ import numpy as np
 from flasgger import Swagger
 from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
-from flasgger import Swagger
 from remla01_lib import mlSteps
-import numpy as np
 # from logger.custom_logger import CustomFormatter
 # import logging
 
-"""FLASK"""""
 app = Flask(__name__)
 
 # CORS
@@ -40,6 +37,9 @@ versionMetrics: dict = {}
 reviews = []
 
 class VersionMetrics:
+    """
+    Class that represents the different types of metrics.
+    """
     number_of_requests: int
     number_of_positive_predictions: int
     number_of_negative_predictions: int
@@ -117,6 +117,14 @@ def get_count_vectorizer():
 
 
 def preprocess_review(review: str) -> np.ndarray:
+    """
+    Preprocess the review
+    Args:
+        review (str): The review to preprocess.
+
+    Returns:
+        np.ndarray: The preprocessed review.
+    """
     review = mlSteps.remove_stopwords(review)
     cv = get_count_vectorizer()
     return cv.transform([review]).toarray()
@@ -137,7 +145,15 @@ def classify_review(review: str):
     return result
 
 def get_version_metrics(version: str) -> VersionMetrics:
+    """
+    Gets the metrics of the given version. If the version is not yet known it add that version to the list.
 
+    Args:
+        version (str): The version to get the metrics for.
+
+    Returns:
+        VersionMetrics: The metrics belonging to the given version.
+    """
     if version not in versionMetrics:
         versionMetrics[version] = VersionMetrics()
 
@@ -256,8 +272,8 @@ def check_prediction():
         else int(not review.predicted)
     )
     return {
-        # "number_of_correct_predictions": NUMBER_OF_CORRECT_PREDICTIONS,
-        # "number_of_incorrect_predictions": NUMBER_OF_INCORRECT_PREDICTIONS,
+        "number_of_correct_predictions": metrics.number_of_correct_predictions,
+        "number_of_incorrect_predictions": metrics.number_of_incorrect_predictions,
     }
 
 
@@ -347,33 +363,33 @@ def get_metrics():
         metrics: VersionMetrics = versionMetrics[version_string]
 
         version = version_string.replace(".", "_")
-        message += f"# HELP number_of_requests_{version} Number of requests of version {version}\n"
+        message += f"# HELP number_of_requests_{version} Number of predictions of version {version_string}\n"
         message += f"# TYPE number_of_requests_{version} counter\n"
         message += f"number_of_requests_{version} {metrics.number_of_requests}\n\n"
 
         totalMetrics.number_of_requests += metrics.number_of_requests
 
-        message += f"# HELP number_of_positive_predictions_{version} Number of positive predictions of version {version}\n"
+        message += f"# HELP number_of_positive_predictions_{version} Number of positive predictions of version {version_string}\n"
         message += f"# TYPE number_of_positive_predictions_{version} counter\n"
         message += f"number_of_positive_predictions_{version} {metrics.number_of_positive_predictions}\n\n"
         totalMetrics.number_of_positive_predictions += metrics.number_of_positive_predictions
 
-        message += f"# HELP number_of_negative_predictions_{version} Number of negative predictions of version {version}\n"
+        message += f"# HELP number_of_negative_predictions_{version} Number of negative predictions of version {version_string}\n"
         message += f"# TYPE number_of_negative_predictions_{version} counter\n"
         message += f"number_of_negative_predictions_{version} {metrics.number_of_negative_predictions}\n\n"
         totalMetrics.number_of_negative_predictions += metrics.number_of_negative_predictions
 
-        message += f"# HELP number_of_correct_predictions Number of correct predictions of version {version}\n"
+        message += f"# HELP number_of_correct_predictions Number of correct predictions of version {version_string}\n"
         message += f"# TYPE number_of_correct_predictions_{version} counter\n"
         message += f"number_of_correct_predictions_{version} {metrics.number_of_correct_predictions}\n\n"
         totalMetrics.number_of_correct_predictions += metrics.number_of_correct_predictions
 
-        message += f"# HELP number_of_incorrect_predictions_{version} Number of incorrect predictions of version {version}\n"
+        message += f"# HELP number_of_incorrect_predictions_{version} Number of incorrect predictions of version {version_string}\n"
         message += f"# TYPE number_of_incorrect_predictions_{version} counter\n"
         message += f"number_of_incorrect_predictions_{version} {metrics.number_of_incorrect_predictions}\n\n"
         totalMetrics.number_of_incorrect_predictions += metrics.number_of_incorrect_predictions
 
-    message += "# HELP number_of_requests Number of requests\n"
+    message += "# HELP number_of_requests Number of predictions\n"
     message += "# TYPE number_of_requests counter\n"
     message += f"number_of_requests {totalMetrics.number_of_requests}\n\n"
 
