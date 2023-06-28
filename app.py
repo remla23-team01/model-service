@@ -126,8 +126,8 @@ def preprocess_review(review: str) -> np.ndarray:
         np.ndarray: The preprocessed review.
     """
     review = mlSteps.remove_stopwords(review)
-    cv = get_count_vectorizer()
-    return cv.transform([review]).toarray()
+    count_vectorizer = get_count_vectorizer()
+    return count_vectorizer.transform([review]).toarray()
 
 
 def classify_review(review: str):
@@ -193,11 +193,11 @@ def predict():
     # Increment the number of requests
     metrics.number_of_requests += 1
 
-    input: str = request.get_json().get("review")
+    review_input: str = request.get_json().get("review")
 
     # Preprocess the review
     # logger.debug("Preprocessing review...")
-    processed_review = preprocess_review(input)
+    processed_review = preprocess_review(review_input)
     # logger.info("Preprocessing done.")
     # Make the prediction
     # logger.debug("Classifying review...")
@@ -214,7 +214,7 @@ def predict():
 
     next_id = len(reviews)
 
-    review = Review(next_id, input, predicted_class)
+    review = Review(next_id, review_input, predicted_class)
     reviews.append(review)
     return {"predicted_class": predicted_class, "review": review.__dict__}
 
@@ -363,10 +363,10 @@ def get_metrics():
         metrics: VersionMetrics = versionMetrics[version_string]
 
         version = version_string.replace(".", "_")
+
         message += f"# HELP number_of_requests_{version} Number of predictions of version {version_string}\n"
         message += f"# TYPE number_of_requests_{version} counter\n"
         message += f"number_of_requests_{version} {metrics.number_of_requests}\n\n"
-
         totalMetrics.number_of_requests += metrics.number_of_requests
 
         message += f"# HELP number_of_positive_predictions_{version} Number of positive predictions of version {version_string}\n"
